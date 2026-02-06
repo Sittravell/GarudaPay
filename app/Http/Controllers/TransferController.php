@@ -32,15 +32,10 @@ class TransferController extends Controller
         // Find recipient by phone
         $recipientUser = User::where('phone_number', $recipientPhone)->first();
         if (!$recipientUser) {
-            // User not found. We need to create it.
-            // But we require recipient_name to do so.
-            if (!$request->recipient_name) {
-                return response()->json(['message' => 'Recipient name is required when transferring to a new user.'], 422);
-            }
 
             // Create new user
             $recipientUser = User::create([
-                'name' => $request->recipient_name,
+                'name' => $request->recipient_name ?? "Garuda User",
                 'email' => $recipientPhone . '@wrapper.com', // Placeholder
                 'phone_number' => $recipientPhone,
                 'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
