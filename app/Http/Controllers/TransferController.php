@@ -20,13 +20,13 @@ class TransferController extends Controller
             'recipient_phone' => 'required',
             'recipient_name' => 'nullable|string',
             'account_id' => 'nullable|exists:accounts,id', // Sender account
-            'fund' => 'required|numeric|decimal:0,3|gt:0', // "positive only"
+            'amount' => 'required|numeric|decimal:0,3|gt:0', // "positive only"
             'currency' => 'required|exists:currencies,code',
         ]);
 
         $user = $request->user();
         $recipientPhone = $request->recipient_phone;
-        $inputAmount = (float) $request->fund;
+        $inputAmount = (float) $request->amount;
         $currency = $request->currency;
 
         // Find recipient by phone
