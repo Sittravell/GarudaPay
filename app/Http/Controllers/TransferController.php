@@ -17,7 +17,8 @@ class TransferController extends Controller
         // "uses phone number instead of recipient id"
 
         $request->validate([
-            'recipient_phone' => 'required|exists:users,phone_number',
+            'recipient_phone' => 'required',
+            'recipient_name' => 'nullable|string',
             'account_id' => 'nullable|exists:accounts,id', // Sender account
             'fund' => 'required|numeric|decimal:0,3|gt:0', // "positive only"
             'currency' => 'required|exists:currencies,code',
@@ -31,7 +32,27 @@ class TransferController extends Controller
         // Find recipient by phone
         $recipientUser = User::where('phone_number', $recipientPhone)->first();
         if (!$recipientUser) {
-            return response()->json(['message' => 'Recipient not found'], 404);
+            // User not found. We need to create it.
+            // But we require recipient_name to do so.
+            if (!$request->recipient_name) {
+                return response()->json(['message' => 'Recipient name is required when transferring to a new user.'], 422);
+            }
+
+            // Create new user
+            $recipientUser = User::create([
+                'name' => $request->recipient_name,
+                'email' => $recipientPhone . '@wrapper.com', // Placeholder
+                'phone_number' => $recipientPhone,
+                'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(16)),
+            ]);
+
+            // Create main account for new user
+            $recipientUser->accounts()->create([
+                'name' => 'Main Account',
+                'is_main' => true,
+                'balance' => 0,
+                'currency' => 'USD',
+            ]);
         }
 
         if ($user->id == $recipientUser->id) {
